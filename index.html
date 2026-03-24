@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mt. Pleasant Periodontics</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('mL9Z92kZ6yZpjqdR9');</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -418,7 +420,7 @@
 <div class="top-strip">
   <div class="top-strip-left">
     <span>📍 1321 Chuck Dawley Blvd., Suite 101 — Mt. Pleasant, SC 29464</span>
-    <span>✉ info@mtpleasantperio.com</span>
+    <span>✉ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3c55525a537c51484c50595d4f5d52484c594e5553125f5351">[email&#160;protected]</a></span>
   </div>
   <div class="top-strip-right">(843) 881-9909</div>
 </div>
@@ -515,7 +517,7 @@
   <div class="chat-powered">Powered by YourAgency AI · white-label ready</div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   let chatOpen = false;
   let awaitingName=false, awaitingPhone=false, awaitingEmail=false, awaitingConcern=false, awaitingTime=false;
   let leadName='', leadPhone='', leadEmail='', concern='';
@@ -630,9 +632,60 @@
     }
     if (awaitingTime) {
       awaitingTime = false;
+      const preferredTime = text;
+      const timestamp = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+      const leadPayload = {
+        lead_name: leadName,
+        lead_phone: leadPhone,
+        lead_email: leadEmail,
+        lead_concern: concern,
+        lead_time: preferredTime,
+        channel: 'Website Chat',
+        timestamp: timestamp
+      };
+
+      // ── 1. EmailJS notification ──
+      const EMAILJS_PUBLIC_KEY = 'mL9Z92kZ6yZpjqdR9';
+      const EMAILJS_SERVICE_ID = 'service_8vw99nj';
+      const EMAILJS_TEMPLATE_ID = 'template_449fpzs';
+
+      if (typeof emailjs !== 'undefined') {
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, leadPayload)
+          .then(() => console.log('EmailJS: notification sent'))
+          .catch(err => console.warn('EmailJS error:', err));
+      }
+
+      // ── 2. Google Sheets logging ──
+      const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyRMg4Upc2EzjdF6pvD5hUWVfXiMjWotl-lkUtDdFB0lmyOQf0n0pPpjB3kSJ6NDeZL/exec';
+
+      fetch(SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadPayload)
+      })
+      .then(() => console.log('Sheets: lead logged'))
+      .catch(err => console.warn('Sheets error:', err));
+
+      // ── 3. Twilio SMS stub ──
+      // When ready: create a Vercel serverless function at /api/notify.js
+      // that accepts POST and calls Twilio REST API with your credentials.
+      // Then uncomment and update the URL below:
+      //
+      // fetch('https://your-project.vercel.app/api/notify', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     to: '+18435550000', // front desk number
+      //     message: `New appt request: ${leadName} · ${concern} · ${preferredTime} · ${leadPhone}`
+      //   })
+      // });
+
       const card = document.createElement('div');
       card.className = 'booked-card';
-      card.innerHTML = `<div class="booked-title">Appointment Request Received</div><div class="booked-detail">${leadName} · ${concern}<br>Preferred: ${text}<br>Maria will follow up by phone or email to confirm.</div>`;
+      card.innerHTML = `<div class="booked-title">Appointment Request Received</div><div class="booked-detail">${leadName} · ${concern}<br>Preferred: ${preferredTime}<br>Maria will follow up by phone or email to confirm.</div>`;
+
       showTyping(() => {
         addMsg('agent', `You're all set, ${leadName}. Your request has been sent to our team. Maria, our patient coordinator, will be in touch shortly to confirm your appointment time. We look forward to meeting you!`, card);
         setQR(["What to bring to my first visit?", "Insurance questions", "Where are you located?"]);
@@ -726,15 +779,4 @@
     } else {
       showTyping(() => {
         addMsg('agent', `That's a great question — I want to make sure you get the right answer. Would you like to speak with Maria, our patient coordinator, or can I help with one of these?`);
-        setQR(["Request an appointment", "About our services", "Insurance & payment", "About Dr. Morris"]);
-      }, 850);
-    }
-  }
-
-  setTimeout(() => {
-    if (!chatOpen) document.querySelector('.notif').style.display = 'flex';
-  }, 2500);
-</script>
-
-</body>
-</html>
+        setQR(["Request an appointm
